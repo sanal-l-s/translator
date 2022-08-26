@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:translator/constants/colors.dart';
 import 'package:translator/constants/widgets.dart';
+import 'package:translator/data/api.dart';
+import 'package:translator/models/LanguagesModel.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
@@ -111,10 +113,14 @@ class HomePage extends StatelessWidget {
             style: const TextStyle(color: Colors.white, fontSize: 16),
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 32),
-          onTap: () {
+          onTap: () async {
+
+            Languages _languagesList = await fetchLanguage();
+            // print(_languagesList.languages);
+
             showModalBottomSheet(
               context: context,
-              builder: (context) => buildBottomModal(),
+              builder: (context) => buildBottomModal(_languagesList.languages),
               backgroundColor: Colors.transparent,
               isScrollControlled: true,
               // isDismissible: true
@@ -196,7 +202,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  buildBottomModal() {
+  buildBottomModal(languages) {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
       child: DraggableScrollableSheet(
@@ -247,16 +253,16 @@ class HomePage extends StatelessWidget {
                 ),
                 Expanded(
                   child: ListView.builder(
-                    itemBuilder: (context, index) => _buildListItem(context),
-                    itemCount: 10,
+                    itemBuilder: (context, index) => _buildListItem(context,languages![index].name!),
+                    itemCount: languages!.length
                   ),
                 ),
                 kSpacer8,
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "There are 6 languages",
+                      "There are ${languages!.length} languages",
                       style: TextStyle(color: Colors.white38),
                     ),
                   ),
@@ -270,7 +276,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  _buildListItem(context) {
+  _buildListItem(context, String name) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(
@@ -281,12 +287,14 @@ class HomePage extends StatelessWidget {
         ),
         child: ListTile(
           title: Text(
-            "Germany",
+            name,
             style: const TextStyle(color: Colors.white),
           ),
           contentPadding: EdgeInsets.symmetric(horizontal: 32),
           onTap: () {
-            Navigator.of(context).pop();
+            // Navigator.of(context).pop();
+            // fetchLanguage();
+            // translate();
           },
         ),
       ),

@@ -2,10 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:translator/constants/colors.dart';
 import 'package:translator/constants/widgets.dart';
-import 'package:translator/data/api.dart';
-import 'package:translator/models/LanguagesModel.dart';
+import 'package:translator/view/homepage/homepage_bloc.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({Key? key}) : super(key: key);
@@ -15,7 +15,7 @@ class HomePage extends StatelessWidget {
   final String _sourceLanguage = "English";
   final String _targetLanguage = "Spanish";
   final String resultText =
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed egestas, mauris ultricies pulvinar bibendum, diam lectus tincidunt est, nec vestibulum augue velit at sapien. Etiam vulputate in sapien sollicitudin ullamcorper. Integer semper, ipsum eu porta tincidunt, ex enim accumsan justo, sit amet rutrum orci nulla vitae nisi. Ut mauris tortor, malesuada nec justo non, laoreet tristique leo. Duis iaculis eget quam sed tempus. Praesent hendrerit purus sem, ac mattis enim tempus nec. Suspendisse potenti. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec non urna ac ex pharetra facilisis. Aenean porttitor sed nisi laoreet rutrum. Donec porttitor dolor justo, ut porttitor orci tincidunt ut. Cras laoreet quam sit amet nulla aliquet rutrum vitae non justo. Nam aliquam tellus non lorem feugiat auctor.";
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed egestas, mauris ultricies pulvinar bibendum, diam lectus tincidunt est, nec vestibulum augue velit at sapien.";
 
   @override
   Widget build(BuildContext context) {
@@ -114,13 +114,26 @@ class HomePage extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 32),
           onTap: () async {
-
-            Languages _languagesList = await fetchLanguage();
+            // Languages _languagesList = await fetchLanguage();
             // print(_languagesList.languages);
 
+            BlocProvider.of<HomepageBloc>(context).add(HomePageListLanguages());
             showModalBottomSheet(
               context: context,
-              builder: (context) => buildBottomModal(_languagesList.languages),
+              builder: (context) => BlocBuilder<HomepageBloc, HomepageState>(
+                builder: (context, state) {
+                  if (state is LanguageListLoading) {
+                    return buildBottomModal(loading: true);
+                  }
+                  if (state is LanguageListSuccess) {
+                    final languagesList = state.languageList.languages;
+                    return buildBottomModal(languages: languagesList);
+                  }
+                  return Container();
+
+                  // return buildBottomModal();
+                },
+              ),
               backgroundColor: Colors.transparent,
               isScrollControlled: true,
               // isDismissible: true
@@ -202,7 +215,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  buildBottomModal(languages) {
+  buildBottomModal({languages, loading = false}) {
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
       child: DraggableScrollableSheet(
@@ -252,18 +265,24 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: ListView.builder(
-                    itemBuilder: (context, index) => _buildListItem(context,languages![index].name!),
-                    itemCount: languages!.length
-                  ),
+                  child: loading
+                      ? const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      : ListView.builder(
+                          itemBuilder: (context, index) =>
+                              _buildListItem(context, languages?[index].name!),
+                          itemCount: languages?.length),
                 ),
                 kSpacer8,
                 Padding(
-                  padding: EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "There are ${languages!.length} languages",
-                      style: TextStyle(color: Colors.white38),
+                      loading
+                          ? "Fetching Languages..."
+                          : "There are ${languages?.length} languages",
+                      style: const TextStyle(color: Colors.white38),
                     ),
                   ),
                 ),
@@ -291,7 +310,8 @@ class HomePage extends StatelessWidget {
             style: const TextStyle(color: Colors.white),
           ),
           contentPadding: EdgeInsets.symmetric(horizontal: 32),
-          onTap: () {
+          onTap: () async {
+            // await translate();
             // Navigator.of(context).pop();
             // fetchLanguage();
             // translate();
